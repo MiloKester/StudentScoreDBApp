@@ -9,8 +9,8 @@
 
     <ScrollView
         android:id="@+id/scrollView2"
-        android:layout_width="220dp"
-        android:layout_height="474dp"
+        android:layout_width="218dp"
+        android:layout_height="191dp"
         android:layout_marginTop="8dp"
         app:layout_constraintEnd_toStartOf="@+id/btnDeleteScore"
         app:layout_constraintStart_toStartOf="parent"
@@ -68,16 +68,6 @@
         app:layout_constraintBottom_toTopOf="@+id/btnDeleteDB"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <Button
-        android:id="@+id/btnDisplayScore"
-        android:layout_width="155dp"
-        android:layout_height="52dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="16dp"
-        android:text="@string/display_scores"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnEditScore" />
-
     <TextView
         android:id="@+id/txtScore"
         android:layout_width="wrap_content"
@@ -124,5 +114,12 @@
         android:text="@string/delete_database"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="238dp"
+        android:layout_height="304dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

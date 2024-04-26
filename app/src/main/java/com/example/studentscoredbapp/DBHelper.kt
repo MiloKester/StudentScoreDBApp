@@ -2,7 +2,6 @@ package com.example.studentscoredbapp
 
 import android.content.ContentValues
 import android.content.Context
-import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
@@ -51,25 +50,15 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         db.close()
     }
 
-    /*
-    fun getScores(): Cursor? {
-        val db = this.readableDatabase
-
-        return db.rawQuery("SELECT * FROM " + TABLE_NAME, null)
-
-    }
-     */
-
     fun getScores() : ArrayList<Score> {
         val db = this.readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME, null)
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_NAME", null)
         val scoreList = ArrayList<Score>()
 
         if (cursor.moveToFirst()) {
             do {
                 scoreList.add(
                     Score(
-                        cursor.getInt(cursor.getColumnIndexOrThrow(ID)),
                         cursor.getString(cursor.getColumnIndexOrThrow(SUBJECT)),
                         cursor.getInt(cursor.getColumnIndexOrThrow(SCORE))
                     )
@@ -105,9 +94,5 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         db.close()
 
         return rows
-    }
-
-    fun recreateDatabaseAndTables() {
-
     }
 }

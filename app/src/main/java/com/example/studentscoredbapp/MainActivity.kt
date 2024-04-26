@@ -1,6 +1,5 @@
 package com.example.studentscoredbapp
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -8,10 +7,11 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import android.util.Log
+import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 
 class MainActivity : AppCompatActivity() {
-    @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -22,9 +22,11 @@ class MainActivity : AppCompatActivity() {
         val btnEditScore : Button = findViewById(R.id.btnEditScore)
         val btnDeleteScore : Button = findViewById(R.id.btnDeleteScore)
         val btnDeleteDB : Button = findViewById(R.id.btnDeleteDB)
-        val btnDisplayScore : Button = findViewById(R.id.btnDisplayScore)
         val subjectEntry : EditText = findViewById(R.id.editSubjectEntry) // EditText vs TextView
         val scoreEntry : EditText = findViewById(R.id.editScoreEntry)
+        val recyclerView: RecyclerView = findViewById(R.id.recyclerView)
+
+        displayScores() // on load
 
         btnAddScore.setOnClickListener {
             val db = DBHelper(this, null)
@@ -38,11 +40,11 @@ class MainActivity : AppCompatActivity() {
             // if not add to database
             db.addScore(subject, score) // error i think as a result of db line
 
-            Toast.makeText(this, subject + " added to database", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "$subject added to database", Toast.LENGTH_SHORT).show()
 
             subjectEntry.text.clear()
             scoreEntry.text.clear()
-            // redisplay
+            displayScores()
         }
 
         btnEditScore.setOnClickListener {
@@ -52,74 +54,101 @@ class MainActivity : AppCompatActivity() {
             val rows = db.updateScore(subject, score)
 
             Toast.makeText(this, "$rows score(s) updated", Toast.LENGTH_LONG).show()
+            displayScores()
         }
 
         btnDeleteScore.setOnClickListener {
-            val db = DBHelper(this, null)
-            val subject = subjectEntry.text.toString()
-            val rows = db.deleteScore(subject)
+            // check if theres a subject in the textbox
 
-            Toast.makeText(this,
-                when (rows) {
-                    0 -> "Nothing deleted"
-                    1 -> "1 score deleted"
-                    else -> "" // shouldn't happen
-                },
-                Toast.LENGTH_LONG).show()
+            val dialogBuilder = AlertDialog.Builder(this)
+            val inflater = this.layoutInflater
+            val dialogView = inflater.inflate(R.layout.confirm_delete, null)
+
+            val subject = subjectEntry.text.toString()
+
+            dialogBuilder.setIcon(android.R.drawable.ic_delete)
+            dialogBuilder.setTitle("Delete Score")
+            dialogBuilder.setMessage("Are You Sure You Want To Delete Your $subject Score?\n\nThis Action is Permanent.")
+            dialogBuilder.setView(dialogView)
+
+            dialogBuilder.setPositiveButton("Yes") { _, _ ->
+                    val db = DBHelper(this, null)
+
+                    val rows = db.deleteScore(subject)
+
+                    Toast.makeText(this,
+                        when (rows) {
+                            0 -> "Nothing deleted"
+                            1 -> "1 score deleted"
+                            else -> "" // shouldn't happen
+                        },
+                        Toast.LENGTH_LONG).show()
+
+                    displayScores()
+            }
+            dialogBuilder.setNegativeButton("No", null)
+
+            dialogBuilder.show()
         }
 
         btnDeleteDB.setOnClickListener {
-            val db = DBHelper(this, null)
-            val isSuccessful = db.deleteDB()
+            val dialogBuilder = AlertDialog.Builder(this)
+            val inflater = this.layoutInflater
+            val dialogView = inflater.inflate(R.layout.confirm_delete, null)
 
-            // popup warning confirmation should go here
+            dialogBuilder.setIcon(android.R.drawable.ic_delete)
+            dialogBuilder.setTitle("Delete Database")
+            dialogBuilder.setMessage("Are You Sure You Want To Delete The Entire Database?\n\nThis Action is Permanent.")
+            dialogBuilder.setView(dialogView)
 
-            Toast.makeText(this,
-                when (isSuccessful) {
-                    true -> "Database Successfully Deleted"
-                    false -> "Failed to Delete Database"
-                },
-                Toast.LENGTH_LONG).show()
+            dialogBuilder.setPositiveButton("Yes") { _, _ ->
+                    val db = DBHelper(this, null)
+                    val isSuccessful = db.deleteDB()
+
+                    Toast.makeText(this,
+                        when (isSuccessful) {
+                            true -> "Database Successfully Deleted"
+                            false -> "Failed to Delete Database"
+                        },
+                        Toast.LENGTH_LONG).show()
+
+                    displayScores()
+            }
+            dialogBuilder.setNegativeButton("No", null)
+
+            dialogBuilder.show()
         }
 
         /*
-        btnDisplayScore.setOnClickListener {
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        val data = DBHelper(this, null)
+        */
 
-            val db = DBHelper(this, null)
-            val cursor = db.getScores()
+    }
 
-            cursor!!.moveToFirst()
-            val scoreRecord : TextView = findViewById(R.id.tvScoreRecord)
+    private fun displayScores() {
+        val db = DBHelper(this, null)
+        val scoreList = db.getScores()
 
-            scoreRecord.text = "Scores:\n" // clears by only having title
+        val scoreRecord : TextView = findViewById(R.id.tvScoreRecord)
+        scoreRecord.text = getString(R.string.score_title) // clears by only having title
 
-            if (cursor!!.moveToFirst()) {
-                scoreRecord.append(cursor.getString(0) + ":" +
-                cursor.getString(1) +
-                "(" + cursor.getString(2) + ")\n")
-            }
-
-                while (cursor.moveToNext()) {
-                scoreRecord.append(cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.ID)) +
-                        ": " + cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.SUBJECT)) +
-                        " (" + cursor.getString(cursor.getColumnIndexOrThrow(DBHelper.SCORE)) + ")\n")
-            }
-        }
-         */
-
-        btnDisplayScore.setOnClickListener {
-            val db = DBHelper(this, null)
-            val scoreList = db.getScores()
-
-            val scoreRecord : TextView = findViewById(R.id.tvScoreRecord)
-            scoreRecord.text = getString(R.string.score_title) // clears by only having title
-
-            scoreList.forEach {
-                scoreRecord.append("$it\n")
-            }
+        scoreList.forEach {
+            scoreRecord.append("$it\n")
         }
     }
 }
+
+// TODO: on item click, load into fields to edit or delete
+// TODO: redesign score list to have proper columns
+// ^ currently literally just a string with line breaks im gonna- recyclerview if i can figure it out
+// TODO: transaction integrity
+
+// find a better way to display scores
+// 2 columns of Subject then Score?
+// | SUBJECT | SCORE|
+// | ENGLISH | 98   |
+// table layout?
 
 // transaction integrity through the confirmation thingy
 
@@ -133,4 +162,4 @@ class MainActivity : AppCompatActivity() {
 //each other.
 //• Vulnerable Transaction Integrity example
 
-// that shit ^
+// ACID - atomicity, consistency, isolation, durability
